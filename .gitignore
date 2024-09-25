@@ -1,1 +1,5 @@
 .idea/
+dataset/test_data_10_nodes/result/img/pheromone/122.png
+dataset/
+*.pyc
+datagen/vrp.code-workspace
