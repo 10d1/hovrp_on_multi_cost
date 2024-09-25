@@ -126,7 +126,7 @@ def dummy_ltl_cost_function(loads, fix_cost, cost_per_km, distance, plotting=Fal
     total_ftl_cost = ftl_cost(x)
 
     # 计算零担单位费用
-    ltl_unit_cost = (total_ftl_cost / x )* random.uniform(1, 2)
+    ltl_unit_cost = (total_ftl_cost / x ) * random.uniform(1, 2)
 
     if plotting:
         weights = np.linspace(0, max_load, 1000)
@@ -236,9 +236,9 @@ if __name__=="__main__":
     ftl_cost = {"loads": (2, 10, 20),
                 "fix_costs": (200, 500, 1500),
                 "cost_per_km": 0.5}
-    data_path = r"D:\Development\code_commit_repo\vrp\dataset\test_data_5_nodes\\"
-    demands_range = (1, 5)
-    n_nodes = 5
+    data_path = r"D:\Development\code_commit_repo\vrp\dataset\test_data_100_nodes\\"
+    demands_range = (0.1, 15)
+    n_nodes = 100
     resolution = 1
     nodes = gen_locations(n_nodes=n_nodes, plotting=False)
     distances, edges = gen_edges(nodes, resolution=resolution, max_distance=500, 
@@ -257,7 +257,12 @@ if __name__=="__main__":
     (ext_nodes, ext_demands, 
      ext_edges, ext_nodes_type, 
      ext_distance, 
-     ltl_cost, ext_capacity) = extent_cost_graph(nodes,  demands, edges, distances, ftl_cost, plotting_path=os.path.join(data_path,'cost_funcs'))
+     ltl_cost, ext_capacity) = extent_cost_graph(nodes,
+                                                 demands,
+                                                 edges,
+                                                 distances,
+                                                 ftl_cost,
+                                                 plotting_path=os.path.join(data_path,'cost_funcs'))
 
 
     # 保存数据到pickle文件

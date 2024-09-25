@@ -49,14 +49,32 @@ def two_opt(path, weight, cost_func, iteration_num=50):
             break
     return path, best_distance
 
-def apply_2opt(solution, cost_func, iteration_num=50):
+
+def insert_ltl(path, size, weight, cost_func):
+    """
+    去掉ltl节点看是否对于方案有提升
+    """
+    cost = cost_func([{"path":path, "weight": weight}])
+    start = path[0]
+    ltl = cost_func([{"path":[start, start + size, 0], "weight": weight}])
+    if ltl <= cost:
+        return [start, start + size, 0], ltl
+    else:
+        return path, cost
+
+
+def apply_local_optimal(solution, nodes_size, cost_func, iteration_num=50):
     """
     对整个方案的所有path应用2opt
     """
     new_solution = []
     for r in solution:
-        if len(r['path']) <= 2:
-            new_solution.append(r)
+        if len(r['path']) <= 2: #如果节点短，则尝试插入ltl看是否有改进
+            new_path, _ = insert_ltl(path=r['path'],
+                                     weight=r['weight'],
+                                     cost_func=cost_func,
+                                     size=nodes_size)
+            new_solution.append({'path': new_path, 'weight': r['weight']})
         else:
             new_path, _ = two_opt(path=r['path'], 
                                   weight=r['weight'],

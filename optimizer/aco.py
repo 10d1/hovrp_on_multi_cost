@@ -88,7 +88,8 @@ class Ant(object):
         tau = []
         for i in possible_nodes:
             new_loads = self.load + self.G.nodes[i]['demand']
-            fix_cost = self.fix_cost_func(new_loads) or 0
+            if self.G.nodes[i]['type'] != 'L':
+                fix_cost = self.fix_cost_func(new_loads) or 0
             ltl_cost = self.G[self.current_loc][i]['ltl_cost'] * new_loads or 0
             ftl_cost = self.G[self.current_loc][i]['ftl_cost'] or 0
             new_cost = fix_cost + ltl_cost + ftl_cost
@@ -135,6 +136,7 @@ class Ant(object):
                               and n not in self.tabu]
 
             if not possible_nodes:
+                self.update_tabu()
                 self.restart()
                 return
 
@@ -240,7 +242,7 @@ class Colony(object):
             f_nodes = [node for node in self.G.nodes() if self.G.nodes[node]['type'] == 'F']
             if f_nodes:
                 #tart_node = max(f_nodes, key=lambda node: self.G.nodes[node]['demand'])
-                start_node = np.random.choice(f_nodes)
+                start_node = int(np.random.choice(f_nodes))
             else:
                 return "no feasible nodes"
             ant.start(start_node)
@@ -337,7 +339,7 @@ if __name__ == "__main__":
 
 
 
-    plm = graphProblem(data_path=r"D:\Development\code_commit_repo\vrp\dataset\test_data_5_nodes\data.pkl",
+    plm = graphProblem(data_path=r"D:\Development\code_commit_repo\vrp\dataset\test_data_100_nodes\data.pkl",
                        output_path=r"D:\Development\code_commit_repo\vrp\outputs",)
     plm.set_pheromones()
     plm.show_graph()
@@ -358,9 +360,9 @@ if __name__ == "__main__":
     a.show_attr()
 
     print("测试蚁群")
-    colony = Colony(id='Test_colony', k=10, alpha=0.5, beta=0.5, gamma=1, 
+    colony = Colony(id='Test_colony', k=100, alpha=0.5, beta=0.5, gamma=1,
                     rho=0.5, G=plm.G, 
-                    max_path_length=4, 
+                    max_path_length=6,
                     fix_cost_func=plm.ftl_fix_cost,
                     pheromone=None) 
     print("开始依次遍历")

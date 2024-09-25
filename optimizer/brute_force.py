@@ -2,9 +2,11 @@
 暴力生成所有的排列组合以便得知最优解的位置。
 针对于非常小规模的用于测试的数据集
 """
+import os
+
+import numpy as np
 import pandas as pd
 from optimizer.problem_graph import graphProblem
-
 from itertools import permutations, product, compress
 
 #加载原问题用于计算成本
@@ -56,6 +58,7 @@ print(f"共获得:{len(drived_solutions)}个方案")
 
 #重新整理所有的solutions
 final_costs = []
+solution_weights = []
 for s in drived_solutions:
     temp = []
     for r in s:
@@ -66,8 +69,9 @@ for s in drived_solutions:
         final_costs.append(plm.calculate_cost(temp))
     except KeyError as e:
         print("不可行解", s)
-        final_costs.append(99999)
+        final_costs.append(np.inf)
+    solution_weights.append(temp)
 
-
-data = pd.DataFrame({"Solutions":[str(s) for s in drived_solutions], "Costs": final_costs})
-data.drop_duplicates().to_excel("brute_force_result.xlsx")
+output_path = "\\".join(DATA_PATH.split("\\")[:-1])
+data = pd.DataFrame({"Solutions":[str(s) for s in solution_weights], "Costs": final_costs})
+data.drop_duplicates().to_excel(os.path.join(output_path,"brute_force_result.xlsx"))

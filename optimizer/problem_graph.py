@@ -126,7 +126,8 @@ class graphProblem(object):
         try:
             cost = 0
             for p in solution_path:
-                cost += self.ftl_fix_cost(p['weight'])
+                if self.G.nodes[p['path'][1]]['type'] != 'L':
+                    cost += self.ftl_fix_cost(p['weight'])
                 for i, j in pairwise(p['path']):
                     cost += self.G[i][j]['ltl_cost'] * p['weight']   # LTL成本
                     cost += self.ftl_cost['cost_per_km'] * self.G[i][j]['distance'] # FTL成本
@@ -137,9 +138,11 @@ class graphProblem(object):
             return np.inf
 
 if __name__=='__main__':
-    plm = graphProblem(data_path=r"D:\Development\code_commit_repo\vrp\dataset\test_data_10_nodes\data.pkl",
+    plm = graphProblem(data_path=r"D:\Development\code_commit_repo\vrp\dataset\test_data_5_nodes_small_demands\data.pkl",
                        output_path=r"D:\Development\code_commit_repo\vrp\outputs",)
     import numpy as np
-    plm.show_graph(highlights=np.random.random((20,20))*5)
-    total_cost = plm.calculate_cost([{'weight':1, 'path':[3,4,0]},{'weight':2, 'path':[10,7,0]}])
+    plm.show_graph(highlights=np.random.random((20, 20))*5)
+    total_cost = plm.calculate_cost([{'weight':3.98, 'path':[5,2,1,0]},
+                                     {'weight':1.34, 'path':[3,8,0]},
+                                     {'weight':0.57, 'path':[4,9,0]}])
     print(total_cost)

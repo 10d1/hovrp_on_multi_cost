@@ -13,7 +13,7 @@ from openpyxl import Workbook
 
 from optimizer.problem_graph import graphProblem
 from optimizer.aco import Colony, generate_routes_from_pheromone, generate_solution_from_routes
-from local_optimal import apply_2opt
+from optimizer.local_optimal import apply_local_optimal
 
 
 def add_matrix_to_ws(ws, data):
@@ -33,8 +33,8 @@ def add_matrix_to_ws(ws, data):
     
 
 print("开始加载待求解问题")
-DATA_PATH = r'D:\Development\code_commit_repo\vrp\dataset\test_data_5_nodes\data.pkl'
-OUTPUT_PATH = r'D:\Development\code_commit_repo\vrp\dataset\test_data_5_nodes\result'
+DATA_PATH = r'D:\Development\code_commit_repo\vrp\dataset\test_data_100_nodes\data.pkl'
+OUTPUT_PATH = r'D:\Development\code_commit_repo\vrp\dataset\test_data_100_nodes\result'
 if not os.path.exists(OUTPUT_PATH):
     os.makedirs(OUTPUT_PATH)
     os.makedirs(os.path.join(OUTPUT_PATH, 'img'))
@@ -44,35 +44,36 @@ if not os.path.exists(OUTPUT_PATH):
 plm = graphProblem(data_path=DATA_PATH, output_path=OUTPUT_PATH)
 plm.set_pheromones()
 plm.show_graph()
-
-ALPHA = 0.5
-BETA = 1
+nodes_size = len([f for f in plm.G.nodes if plm.G.nodes[f]['type'] == 'F'])
+ALPHA = 1
+BETA = 0.5
 RHO = 0.05
-GAMMA = 0.9
+GAMMA = 0.95
 MAX_LOOP = 1000
-NO_IMPRO_THERHOLD = 100
-MAX_PATH_LENGHT = 4
-COLONY_SIZE = 10
+NO_IMPRO_THRESHOLD = 50
+MAX_PATH_LENGTH = 4
+COLONY_SIZE = 100
+PLOT_INTERVAL = 10
 best_so_far_solution = None
 best_so_far_cost = float('inf')
 no_improvement_count = 0
 pheromone = None
-
 his_costs = []
 his_solutions = []
 his_pheromones = []
 his_routes = []
 gamma = GAMMA
+
 for i in tqdm(range(MAX_LOOP), desc="当前成本: ", leave=False):
 
     colony = Colony(id=f'Colony|{i}',
-                    k=COLONY_SIZE, 
-                    alpha=ALPHA, 
-                    beta=BETA, 
-                    gamma=GAMMA, 
-                    rho=RHO, 
-                    G=plm.G, 
-                    max_path_length=MAX_PATH_LENGHT, 
+                    k=COLONY_SIZE,
+                    alpha=ALPHA,
+                    beta=BETA,
+                    gamma=GAMMA,
+                    rho=RHO,
+                    G=plm.G,
+                    max_path_length=MAX_PATH_LENGTH,
                     fix_cost_func=plm.ftl_fix_cost,
                     pheromone=pheromone if pheromone is not None else plm.pheromone)
     colony.iterate()
@@ -80,10 +81,12 @@ for i in tqdm(range(MAX_LOOP), desc="当前成本: ", leave=False):
     routes = colony.collect_routs()
     cost = plm.calculate_cost(solution_path=routes)
     his_costs.append(cost)
-    his_pheromones.append(pheromone)
+    his_pheromones.append(pheromone if pheromone is not None else plm.pheromone)
     his_solutions.append(solution)
     if cost < best_so_far_cost:
-        opt_routes, opt_cost = apply_2opt(routes, plm.calculate_cost)
+        opt_routes, opt_cost = apply_local_optimal(solution=routes,
+                                                   cost_func=plm.calculate_cost,
+                                                   nodes_size=nodes_size)
         if opt_cost < cost:
             cost = opt_cost
             solution = generate_solution_from_routes(solution, opt_routes)
@@ -101,11 +104,13 @@ for i in tqdm(range(MAX_LOOP), desc="当前成本: ", leave=False):
         pheromone =  (1 - RHO)  * pheromone + RHO * (rank_new_cost/len(his_costs) * solution
                                                      +  best_so_far_solution)
 
-    if no_improvement_count >= NO_IMPRO_THERHOLD:  # 如果大于NO_IMPRO_THERHOLD的循环次数内没有改进，则停止
+    if no_improvement_count >= NO_IMPRO_THRESHOLD:  # 如果大于NO_IMPRO_THRESHOLD的循环次数内没有改进，则停止
         break
     gamma = gamma * gamma
-    plm.show_graph(highlights=solution, filename=f'img/solution/{i}.png')
-    plm.show_graph(highlights=pheromone * 10, filename=f'img/pheromone/{i}.png')
+    if i % PLOT_INTERVAL == 0:
+        result,solution = generate_routes_from_pheromone(plm.G, pheromone)
+        plm.show_graph(highlights=solution, filename=f'img/solution/{i}.png')
+        plm.show_graph(highlights=pheromone * 10, filename=f'img/pheromone/{i}.png')
     tqdm.write(f"当前成本: {cost}")
 
 print("最终结果")
@@ -130,15 +135,16 @@ ws_solution.append(his_costs)
 
 ws_routes = wb.create_sheet('Pheromone')
 ws_routes.title = 'Routes'
+ws_routes.append(['Costs','Routes'])
 
 
-for i, (p, c, rs) in enumerate(zip(his_pheromones, his_solutions, his_routes)):
+for i, (p, s, rs, c) in enumerate(zip(his_pheromones, his_solutions, his_routes, his_costs)):
     ws_solution.append([f"Solution Iter {i}"])
-    add_matrix_to_ws(ws_solution,best_so_far_solution)
+    add_matrix_to_ws(ws_solution,s)
     ws_pheromone.append([f"Pheromone Iter {i}"])
-    add_matrix_to_ws(ws_pheromone, pheromone)
+    add_matrix_to_ws(ws_pheromone, p)
     ws_pheromone.append([f"Pheromone Iter {i}"])
-    ws_routes.append([str(r) for r in rs])
+    ws_routes.append([c]+[str(r) for r in rs])
 wb.save(OUTPUT_PATH + r'\result.xlsx')
 
 
