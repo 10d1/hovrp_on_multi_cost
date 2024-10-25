@@ -236,9 +236,9 @@ if __name__=="__main__":
     ftl_cost = {"loads": (2, 10, 20),
                 "fix_costs": (200, 500, 1500),
                 "cost_per_km": 0.5}
-    data_path = r"D:\Development\code_commit_repo\vrp\dataset\test_data_100_nodes\\"
-    demands_range = (0.1, 15)
-    n_nodes = 100
+    data_path = r"D:\Development\code_commit_repo\vrp\dataset\test_data_200_nodes\\"
+    demands_range = (0.1, 10)
+    n_nodes = 200
     resolution = 1
     nodes = gen_locations(n_nodes=n_nodes, plotting=False)
     distances, edges = gen_edges(nodes, resolution=resolution, max_distance=500, 

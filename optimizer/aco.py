@@ -307,15 +307,18 @@ def generate_routes_from_pheromone(graph, pheromone):
         max_weight_successor = max(graph.successors(node), key=lambda n: graph[node][n]['weight'])
         edge_to_remove = []
         for successor in graph.successors(node):
-            if successor != max_weight_successor:
+            if node == 0:
+                edge_to_remove.append((node, successor)) # 移除 0 节点的所有出边
+            elif successor != max_weight_successor:
                 edge_to_remove.append((node, successor))
+
         graph.remove_edges_from(edge_to_remove)
     #取得所有类型为L的节点，如果入度为0表示没有需求被运送到这个节点，移除这类无入度的节点
     l_nodes = [node for node in graph if graph.nodes[node]['type'] == 'L']
     for node in l_nodes:
         if graph.in_degree(node) == 0:
             graph.remove_node(node)
-    #取得所有入度为0的叶子节点，找到他们到0节点的最短路径（实际应该只有一个路径了）
+    #取得所有入度为0的叶子节点，找到他们到 0节点的最短路径（实际应该只有一个路径了）
     #计算这个路径的总需求返回
     leaves = [node for node in graph if graph.in_degree(node)==0]
     result = []
@@ -326,6 +329,8 @@ def generate_routes_from_pheromone(graph, pheromone):
         for i,j in pairwise(path):
             solution[i][j] = 1
     return result, solution
+
+
 
 def generate_solution_from_routes(oldsolution,route):
     new_solution = np.zeros_like(oldsolution)
@@ -339,7 +344,7 @@ if __name__ == "__main__":
 
 
 
-    plm = graphProblem(data_path=r"D:\Development\code_commit_repo\vrp\dataset\test_data_100_nodes\data.pkl",
+    plm = graphProblem(data_path=r"D:\Development\code_commit_repo\vrp\dataset\test_data_5_nodes\data.pkl",
                        output_path=r"D:\Development\code_commit_repo\vrp\outputs",)
     plm.set_pheromones()
     plm.show_graph()
@@ -382,3 +387,6 @@ if __name__ == "__main__":
     print("该方案费用为:", cost)
 
     print("更新信息素")
+
+    print("测试生成最终解的逻辑")
+    routes, solution = generate_routes_from_pheromone(plm.G,np.random.random((plm.size, plm.size)))

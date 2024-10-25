@@ -65,7 +65,9 @@ def insert_ltl(path, size, weight, cost_func):
 
 def apply_local_optimal(solution, nodes_size, cost_func, iteration_num=50):
     """
-    对整个方案的所有path应用2opt
+    对整个方案的所有path应用2opt和Insert方法。
+    当路径上只有两个节点的时候，尝试插入一个ltl节点看是否有改进。
+    路径超过三个节点时候应用2opt
     """
     new_solution = []
     for r in solution:
@@ -91,4 +93,4 @@ if __name__=="__main__":
     solution = [{"path":[2,3,0],"weight":9},{"path":[1,5,4,0],"weight":9}]
     plm = graphProblem(data_path=r'D:\Development\code_commit_repo\vrp\dataset\test_data_5_nodes\data.pkl',
                        output_path=None)
-    print(apply_2opt(solution, plm.calculate_cost))
+    print(apply_local_optimal(solution,nodes_size=plm.size, cost_func=plm.calculate_cost))

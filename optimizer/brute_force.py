@@ -1,28 +1,31 @@
 """
 暴力生成所有的排列组合以便得知最优解的位置。
-针对于非常小规模的用于测试的数据集
+针对于非常小规模的用于测试的数据集 (小于7个节点)
 """
 import os
-
+import tqdm
 import numpy as np
 import pandas as pd
 from optimizer.problem_graph import graphProblem
 from itertools import permutations, product, compress
 
+
 #加载原问题用于计算成本
-DATA_PATH = r'D:\Development\code_commit_repo\vrp\dataset\test_data_5_nodes\data.pkl'
+DATA_PATH = r'D:\Development\code_commit_repo\vrp\dataset\test_data_5_nodes_small_demands\data.pkl'
 plm = graphProblem(data_path=DATA_PATH, output_path="")
 
 
 #将原问题视为一个5个节点的排列组合，5个节点可以最多用四个分割，从'的位置'为可分割的子集。
 SIZE = 5
-all_nodes = [i for i in range(1, SIZE+1)]+ ['x','x','x', 'x']
+MAX_PATH_LENGTH = 4
+all_nodes = [i for i in range(1, SIZE+1)] + ['x' for _ in range(SIZE-1)]
 all_permutations = set(permutations(all_nodes))
 print(f"共获得:{len(all_permutations)}个方案")
 
 # 从X处将每个排列组合分割
 split_solutions = []
-for perm in all_permutations:
+print("路径分割中...")
+for perm in tqdm.tqdm(all_permutations):
     temp = []
     subset = []
     for i in range(len(perm)):
@@ -37,8 +40,10 @@ for perm in all_permutations:
         split_solutions.append(temp)
 
 # 再次遍历每个solution， 对于其中有单个节点的成员，再衍生出一个带有ltl节点的
+print("正在生成带有LTL节点的路径...")
+
 drived_solutions = []
-for perm in split_solutions:
+for perm in tqdm.tqdm(split_solutions):
     long_routs = []
     single_ele = []
     for subset in perm:
@@ -59,8 +64,12 @@ print(f"共获得:{len(drived_solutions)}个方案")
 #重新整理所有的solutions
 final_costs = []
 solution_weights = []
-for s in drived_solutions:
+print("计算每条路径的成本...")
+for s in tqdm.tqdm(drived_solutions):
     temp = []
+    if any([len(r)> MAX_PATH_LENGTH for r in s]):
+        print("路径过长，不可行", s)
+        continue
     for r in s:
         path = r + [0]
         demands = sum(plm.G.nodes[n]['demand'] for n in path)
